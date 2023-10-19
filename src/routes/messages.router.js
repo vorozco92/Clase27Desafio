@@ -1,9 +1,8 @@
 import {Router} from "express"
-import Messages  from "../dao/dbManagers/messages.js";
-
+import { MessagesRepository } from "../repositories/Messages.repository.js";
 
 const router = Router();
-const messagesManager = new Messages();
+const messagesRepository = new MessagesRepository()
 
 router.get('/',async(req,res)=>{
 
@@ -13,8 +12,8 @@ router.get('/',async(req,res)=>{
         socket.on('message', data => {
             //messages.push(data);
             console.log(data)
-            messagesManager.addMsg(data).then((result) => {
-                let messages = messagesManager.getAll().then((result) => {
+            messagesRepository.saveMessage(data).then((result) => {
+                let messages = messagesRepository.getAllMessages().then((result) => {
                     req.app.io.emit('messagesLogs',result);  
                     console.log('messaes tow::'+result)   
                 
@@ -29,7 +28,7 @@ router.get('/',async(req,res)=>{
             console.log('Se conecto un nuevo usuario');
             socket.broadcast.emit('newUserFront',data);
             console.log(data)
-            let messages = messagesManager.getAll().then((result) => {
+            let messages = messagesRepository.getAllMessages().then((result) => {
                 req.app.io.emit('messagesLogs',result);  
                 console.log('messaes:'+result)   
             }).catch((err) => {

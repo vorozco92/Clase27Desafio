@@ -2,14 +2,15 @@ import { fileURLToPath } from "url";
 import { dirname } from "path";
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken'
+import UserDTO from "../dto/User.dto.js";
+import CONFIG  from "../config/config.js";
 
-const  KEY ="coderUser"
 
 export const createHash = password=>bcrypt.hashSync(password,bcrypt.genSaltSync(10));
 export const isValidatePassword =(user,password)=> bcrypt.compareSync(password,user.password);
 
 export const generateToken =(user)=>{
-    const token= jwt.sign({user},KEY,{expiresIn:'12h'})
+    const token= jwt.sign({user},CONFIG.SECRET_SESSION,{expiresIn:'12h'})
     return token
 }
 
@@ -19,10 +20,10 @@ export const authToken=(req,res,next)=>{
     console.log(headerAuth);
     const token= headerAuth.split(' ')[1];
 
-    jwt.verify(token,KEY,(error,credentials)=>{
+    jwt.verify(token,CONFIG.SECRET_SESSION,(error,credentials)=>{
         console.log(error);
         if(error)  return res.status(401).send({status:"error",error:"No esta autorizado"})
-        req.user = credentials.user;
+        req.user = UserDTO.getUserInputFromClean(credentials.user);
         next();
     })
 }

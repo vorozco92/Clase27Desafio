@@ -2,9 +2,13 @@ import mongoose from "mongoose";
 
 const messagesCollection = 'messages'
 const messageSchema = mongoose.Schema({
-    user: {
-        type: String,
-        required: true
+    user:{
+        type: [{
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: "users"
+            }
+        ],
+        default: null
     },
     message:{
         type: String,

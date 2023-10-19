@@ -10,7 +10,8 @@ const CONFIG ={
     CLIENT_SECRET: process.env.CLIENT_SECRET || '',
     CALLBACK_URL: process.env.CALLBACK_URL || '',
     EMAIL_ADMIN: process.env.EMAIL_ADMIN || '',
-    PASSWORD_ADMIN: process.env.PASSWORD_ADMIN || ''
+    PASSWORD_ADMIN: process.env.PASSWORD_ADMIN || '',
+    PERSISTENCE: process.env.PERSISTENCE || 'MONGO'
 }
 
 export default  CONFIG;

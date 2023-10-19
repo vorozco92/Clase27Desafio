@@ -1,8 +1,13 @@
 import { Router } from "express"
-import Products  from "../dao/dbManagers/products.js";
+import { ProductsRepository } from "../repositories/Products.repository.js";
+import applyPolicy from '../middleware/auth.middleware.js';
+import passport from "passport";
 
 const router = Router();
-const productManager = new Products();
+const productsRepository = new ProductsRepository()
+
+
+router.use(passport.authenticate('api/sessions/current',{session:false}))
 
 router.get('/',async(req,res)=>{
 
@@ -15,7 +20,7 @@ router.get('/',async(req,res)=>{
     let body = req.body ?? {};
     console.log(body);
     sort =  sort.toLowerCase();
-    let products = await productManager.getAll(limit, page, sort, body);
+    let products = await productsRepository.getAllProducts(limit, page, sort, body);
     //console.log(products)
 
     if (products.docs && ! products.docs.length)
@@ -46,42 +51,41 @@ router.post('/',async(req,res)=>{
         category : category
     }
 
-    //newProduct.id =  await productManager.getIdProduct();
     if (req.body.thumbnails)
         newProduct.thumbnails = req.body.thumbnails
 
     if (req.body.status)
         newProduct.status = req.body.status
 
-    let result =await productManager.saveProducts(newProduct)
+    let result = await productsRepository.saveProduct(newProduct)
     req.app.io.sockets.emit('update_data', {id:result.id,product:result})
     res.send({status:'success',product:result})
 })
 
 router.get('/:id', async(req, res)=>{
     let productId = req.params.id;
-    let product = await productManager.getProductById(productId);
+    let product = await productsRepository.getProductById(productId);
     if (product.id)
         res.send({status:'success',product:product})
     else
         res.send({status:'error','error_description':`producto con Id ${productId} no fue encontrado.`})
 })
 
-router.put('/:id', async(req, res)=>{
+router.put('/:id', applyPolicy(['ADMIN']), async(req, res)=>{
     let productId = req.params.id;
-    let product = await productManager.getProductById(productId);
+    let product = await productsRepository.getProductById(productId);
     if (product){
         let productBody = req.body;
-        let productEdit = await productManager.updateProductById(productId, productBody);
+        let productEdit = await productsRepository.updateProductById(productId, productBody);
         res.send({status:'success',product:productEdit})
     }
     else
         res.send({status:'error','error_description':`producto con Id ${productId} no fue encontrado.`})
 })
 
-router.delete('/:pid', (req, res)=>{
+router.delete('/:pid', applyPolicy(['ADMIN']), (req, res)=>{
     let pid = req.params.pid;
-    if(productManager.deleteProductById(pid)){
+    if(productsRepository.deleteProductById(pid)){
         req.app.io.sockets.emit('delete_product', pid)
         res.send({status:"success", message :"Producto eliminado correctamente"});
     }

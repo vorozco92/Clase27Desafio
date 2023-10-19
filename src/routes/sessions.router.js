@@ -1,14 +1,15 @@
 import { Router } from "express";
-import userModel from "../models/schemas/users.schema.js";
-import { createHash,  isValidatePassword , authToken, generateToken } from "../utils/utils.js";
+import { createHash, authToken, generateToken } from "../utils/utils.js";
 import passport from "passport";
 import CONFIG from '../config/config.js'
+import { UsersRepository } from "../repositories/Users.repository.js";
+
 const router = Router();
-//const userModel = new userModel();
+const usersRepository =new UsersRepository()
 
 router.post("/register", async (req, res) => {
   const { first_name, last_name, email, age, password } = req.body;
-  let exist = await userModel.findOne({ email: email });
+  let exist = await usersRepository.getUserById({ email: email });
   if (exist)
     return res
       .status(400)
@@ -25,7 +26,7 @@ router.post("/register", async (req, res) => {
   if (email == CONFIG.EMAIL_ADMIN && password == CONFIG.PASSWORD_ADMIN)
     user.role = "admin";
 
-  let resr = await userModel.create(user);
+  let resr = await usersRepository.saveUser(user);
   return res
     .status(200)
     .send({ status: "success", msj: "Te registraste correctamente" });
@@ -196,7 +197,7 @@ router.post("/reset", async (req, res) => {
         error_description: "Todos los campos son obligatoios",
       });
 
-  const user = await userModel.findOne({ email: email });
+  const user = await usersRepository.getUserById({ email: email });
 
   if (!user)
     return res.status(400).send({ status: "error", error: "User not found" });

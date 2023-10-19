@@ -22,11 +22,26 @@ import sessionRouter from "../src/routes/sessions.router.js"
 
 const app = express();
 
-mongoose.set('strictQuery',true)
-const connection  = mongoose.connect( CONFIG.MONGO_URI,{
-    useNewUrlParser:true,
-    useUnifiedTopology: true
-})
+console.log(`Persistencia: ${CONFIG.PERSISTENCE}`)
+if (CONFIG.PERSISTENCE === 'MONGO'){
+
+    mongoose.set('strictQuery',true)
+    const connection  = mongoose.connect( CONFIG.MONGO_URI,{
+        useNewUrlParser:true,
+        useUnifiedTopology: true
+    })
+
+    app.use(session({
+        store: MongoStore.create({
+            mongoUrl: CONFIG.MONGO_URI,
+            mongoOptions:{ useNewUrlParser:true, useUnifiedTopology:true},
+            ttl:3600
+        }),
+        secret: CONFIG.SECRET_SESSION,
+        resave: false,
+        saveUninitialized: false
+    }))
+}
 
 const server = app.listen(CONFIG.PORT, ()=>{console.log("Server arriba")})
 const io = new Server(server)
@@ -34,17 +49,6 @@ const io = new Server(server)
 app.io = io;
 
 app.use(cookieParser());
-
-app.use(session({
-    store: MongoStore.create({
-        mongoUrl: CONFIG.MONGO_URI,
-        mongoOptions:{ useNewUrlParser:true, useUnifiedTopology:true},
-        ttl:3600
-    }),
-    secret: CONFIG.SECRET_SESSION,
-    resave: false,
-    saveUninitialized: false
-}))
 
 initializatedPassport()
 initPassportGit()

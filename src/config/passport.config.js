@@ -1,13 +1,12 @@
 import passport from "passport";
 import local from "passport-local";
-
-import Users from "../dao/dbManagers/users.js";
 import { createHash, isValidatePassword } from "../utils/utils.js";
 import githubService from "passport-github2";
 import CONFIG from './config.js'
+import { UsersRepository } from "../repositories/Users.repository.js";
 
 const LocalStrategy = local.Strategy;
-const userService = new Users();
+const usersRepository =new UsersRepository()
 
 export const initializatedPassport = () => {
   passport.use(
@@ -21,7 +20,7 @@ export const initializatedPassport = () => {
         const { first_name, last_name, email, age } = req.body;
 
         try {
-          let user = await userService.getById({ email: username });
+          let user = await usersRepository.getUserById({ email: username });
           if (user) {
             console.log("User already exist");
           }
@@ -33,7 +32,8 @@ export const initializatedPassport = () => {
             age,
             password: createHash(password),
           };
-          let result = await  userService.create(userNew);
+
+          let result = await  usersRepository.saveUser(userNew);
           return done(null, result);
         } catch (error) {
           return done("error en usuario" + error);
@@ -48,7 +48,7 @@ export const initializatedPassport = () => {
       { passReqToCallback: true, usernameField: "email", session: false }, async(req, email, password, done) => {
         try {
             console.log('req:'+req+'email:'+email+' '+password)
-          const user = await userService.getById({email:email});
+          const user = await usersRepository.getUserById({email:email});
           if (!user) return done(null, false, { message: "User not found" });
           const validatePassword = isValidatePassword(user, password);
           if (!validatePassword)
@@ -67,7 +67,7 @@ export const initializatedPassport = () => {
   });
 
   passport.deserializeUser(async (id, done) => {
-    let user = await userService.getById({_id:id});
+    let user = await usersRepository.getUserById({_id:id});
     done(null, user);
   });
 };
@@ -92,16 +92,17 @@ export const initPassportGit = () => {
       async (accessToken, refreshToken, profile, done) => {
         try {
           console.log(profile);
-          let user = await  userService.getById({ email: profile._json.email });
+          let user = await  usersRepository.getUserById({ email: profile._json.email });
           if (!user) {
             let newUser = {
               first_name: profile._json.name,
               last_name: profile._json.name,
-              age: 18,
               email: profile._json.email,
               password: "req",
             };
-            let result = await  users.create(newUser);
+
+            
+            let result = await usersRepository.saveUser(newUser);
             done(null, result);
           } else {
             done(null, user);

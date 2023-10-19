@@ -11,9 +11,15 @@ const cartSchema = mongoose.Schema({
             },
             qty : {type : Number , required: true, default:1 }
         }]
-    }
-
-    
+    },
+    user:{
+        type: [{
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: "users"
+            }
+        ],
+        default: null
+    }    
 })
 
 const cartsModel =  mongoose.model(cartsCollection, cartSchema)
